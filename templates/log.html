@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logs</title>
+</head>
+<body>
+    <h1>Logs</h1>
+    <a href="{{ url_for('logout') }}">Logout</a>
+    <hr>
+    <form action="{{ url_for('manual_log') }}" method="POST">
+        <button type="submit">Log Now</button>
+    </form>
+    <form action="{{ url_for('delete_logs') }}" method="POST">
+        <button type="submit">Delete Logs</button>
+    </form>
+    <hr>
+    <h3>Entries:</h3>
+    {% if logs %}
+        <ul>
+        {% for log in logs %}
+            <li>{{ log }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No logs found.</p>
+    {% endif %}
+</body>
+</html>

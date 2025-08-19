@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Play App Scraper</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="{{ url_for('log_page') }}">Admin Logs</a>
+        </nav>
+
+        <h1>Google Play App Scraper</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flash-messages">
+                {% for category, message in messages %}
+                    <li class="alert alert-{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="app_name">Enter App Name:</label>
+                <input type="text" id="app_name" name="app_name" value="{{ app_name or '' }}" required>
+            </div>
+            <button type="submit">Get App Details</button>
+        </form>
+
+        {% if app_details %}
+        <div class="results">
+            {% if app_details.error %}
+                <div class="alert alert-danger">{{ app_details.error }}</div>
+            {% else %}
+                <h2>{{ app_details.get('title', 'N/A') }}</h2>
+                <p><strong>Developer:</strong> {{ app_details.get('developer', 'N/A') }}</p>
+                <p><strong>Installs:</strong> {{ app_details.get('installs', 'Not available') }}</p>
+                {% if app_details.get('realInstalls') is not none %}
+                    <p><strong>Real Installs:</strong> {{ "{:,}".format(app_details.get('realInstalls')) }}</p>
+                {% endif %}
+                <p><strong>Score:</strong> {{ app_details.get('score', 'N/A') }} ({{ "{:,}".format(app_details.get('ratings', 0)) }} ratings)</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
