@@ -109,7 +109,5 @@ def delete_logs():
         os.remove(LOG_FILE)
     return redirect(url_for('log_page'))
 
-if __name__ == "__main__":
-    if not os.path.exists(LOG_FILE):
-        open(LOG_FILE, 'w').close()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# The 'if __name__ == "__main__":' block has been removed to allow deployment
+# with a production WSGI server like Gunicorn, as specified in render.yaml.

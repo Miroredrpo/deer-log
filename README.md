@@ -5,21 +5,19 @@ This is a simple Flask web application that allows you to get download statistic
 ## Features
 
 -   **Public Search**: Enter any app name to get its current Google Play Store statistics.
--   **Automated Logging**: Automatically logs the statistics for "Deerwalk Learning Center" every 2 hours.
--   **Protected Log Page**: A password-protected page (`/log`) to view, manage, and export historical log data.
+-   **Protected Log Page**: A password-protected page (`/log`) to view and manage statistics for a specific app ("Deerwalk Learning Center").
 
 ## Log Monitoring
 
-This application includes a password-protected area for monitoring the logs of a specific app ("Deerwalk Learning Center").
+This application includes a password-protected area for monitoring app logs.
 
 -   **URL**: `/log`
 -   **Password**: `dss`
 
 On this page, you can:
--   View all historical log entries in a table.
+-   View all historical log entries.
 -   Manually trigger a new log entry to be saved.
--   Export all logs to a CSV file.
--   Delete all logs (a confirmation will be required).
+-   Delete all logs.
 
 ## Local Development
 
@@ -59,3 +57,9 @@ This application is configured for deployment on [Render](https://render.com/).
 5.  Click **Create Web Service** to deploy the application.
 
 The application will be deployed to a public URL.
+
+### Important Note on Data Persistence
+
+This application writes its log file (`deerwalk_logs.jsonl`) to the local filesystem of the server. Free services on Render have an **ephemeral filesystem**, which means the log file will be **deleted** every time the application restarts or is redeployed.
+
+For a production environment where you need to keep your logs permanently, you should use **Render Disks**, which is a paid feature that provides persistent storage. You can learn more in the [Render documentation on disks](https://render.com/docs/disks).
