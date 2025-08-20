@@ -1,3 +1,5 @@
 Flask
 google-play-scraper
 gunicorn
+APScheduler
+pytz
