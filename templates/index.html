@@ -29,8 +29,16 @@
                 <label for="app_name">Enter App Name:</label>
                 <input type="text" id="app_name" name="app_name" value="{{ app_name or '' }}" required>
             </div>
-            <button type="submit">Get App Details</button>
+            <button type="submit" id="main_submit_btn">Get App Details</button>
+            <button type="button" onclick="searchDeerwalk()">Search Deerwalk Learning Center</button>
         </form>
+
+        <script>
+            function searchDeerwalk() {
+                document.getElementById('app_name').value = 'Deerwalk Learning Center';
+                document.getElementById('main_submit_btn').click();
+            }
+        </script>
 
         {% if app_details %}
         <div class="results">
