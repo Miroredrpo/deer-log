@@ -23,8 +23,15 @@ def get_app_details(app_name):
         result = search(app_name, lang='en', country='us')
         if not result:
             return {"error": "No results found for the app."}
-        app_details = gp_app(result[0]['appId'], lang='en', country='us')
-        return app_details
+
+        details = gp_app(result[0]['appId'], lang='en', country='us')
+
+        # Sanitize the output to prevent template errors from None values
+        details['score'] = details.get('score') or 0
+        details['ratings'] = details.get('ratings') or 0
+        details['realInstalls'] = details.get('realInstalls') or 0
+
+        return details
     except Exception as e:
         return {"error": f"An error occurred: {str(e)}"}
 
