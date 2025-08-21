@@ -175,7 +175,10 @@
         </div>
 
         <div class="export-container">
-            <h3>Export Logs</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Export Logs</h3>
+                <button class="btn btn-secondary" onclick="location.reload()">Refresh Log List</button>
+            </div>
             <form action="{{ url_for('export_logs') }}" method="POST" class="actions-bar">
                 <label for="start_date">From:</label>
                 <input type="date" name="start_date" id="start_date">
@@ -217,7 +220,7 @@
                         <td>
                             <form action="{{ url_for('delete_single_log') }}" method="POST" onsubmit="return confirm('Delete this log entry?');">
                                 <input type="hidden" name="timestamp" value="{{ log.timestamp }}">
-                                <input type="password" name="password" placeholder="Password" required style="width: 100px;">
+                                <input type="password" name="password" placeholder="Password" required>
                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                             </form>
                         </td>
@@ -225,6 +228,27 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+
+        <div class="log-cards-container">
+            {% for log in logs %}
+            <div class="log-card">
+                <div class="log-card-row"><strong>Timestamp:</strong> <span>{{ log.timestamp.split('+')[0].replace('T', ' ') }}</span></div>
+                <div class="log-card-row"><strong>App Name:</strong> <span>{{ log.app_name }}</span></div>
+                <div class="log-card-row"><strong>Installs:</strong> <span>{{ log.installs }}</span></div>
+                <div class="log-card-row"><strong>Real Installs:</strong> <span>{{ "{:,}".format(log.realInstalls) }}</span></div>
+                <div class="log-card-row"><strong>Score:</strong> <span>{{ "%.2f"|format(log.score|float) }}</span></div>
+                <div class="log-card-row"><strong>Ratings:</strong> <span>{{ "{:,}".format(log.ratings) }}</span></div>
+                <div class="log-card-row">
+                    <strong>Actions:</strong>
+                    <form action="{{ url_for('delete_single_log') }}" method="POST" onsubmit="return confirm('Delete this log entry?');">
+                        <input type="hidden" name="timestamp" value="{{ log.timestamp }}">
+                        <input type="password" name="password" placeholder="Password to delete" required>
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
         </div>
         {% else %}
             <p class="no-logs">No logs found. Click "Log Now" to create the first entry.</p>
@@ -236,11 +260,15 @@
     </footer>
 
     <script>
+        let countdownInterval;
+
         function updateCountdown() {
             const timerElement = document.getElementById('next-log-timer');
             const nextRunTime = timerElement.getAttribute('data-next-run');
+
             if (!nextRunTime) {
-                timerElement.textContent = 'Automatic logging is not scheduled.';
+                timerElement.textContent = 'Automatic logging not scheduled.';
+                if (countdownInterval) clearInterval(countdownInterval);
                 return;
             }
 
@@ -249,9 +277,25 @@
             const diff = Math.round((nextRunDate - now) / 1000);
 
             if (diff <= 0) {
-                timerElement.textContent = 'Logging now... page will refresh.';
-                // Optional: force a refresh after a few seconds
-                setTimeout(() => window.location.reload(), 5000);
+                timerElement.textContent = 'Logging in background...';
+                if (countdownInterval) clearInterval(countdownInterval);
+
+                // Wait 15 seconds for the job to run and the scheduler to update, then fetch the new time.
+                setTimeout(() => {
+                    fetch("{{ url_for('scheduler_info') }}")
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.next_run_time) {
+                                timerElement.setAttribute('data-next-run', data.next_run_time);
+                                startCountdown(); // Restart the countdown process
+                            } else {
+                                timerElement.textContent = 'Could not get next run time.';
+                            }
+                        })
+                        .catch(() => {
+                            timerElement.textContent = 'Error fetching schedule.';
+                        });
+                }, 15000);
                 return;
             }
 
@@ -262,8 +306,13 @@
             timerElement.textContent = `Next log in: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
 
-        setInterval(updateCountdown, 1000);
-        updateCountdown();
+        function startCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            updateCountdown(); // Run immediately
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
+        startCountdown(); // Initial call
     </script>
 
 </body>

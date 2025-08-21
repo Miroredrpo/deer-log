@@ -208,25 +208,55 @@ footer {
         box-sizing: border-box; /* Ensure padding doesn't break layout */
     }
 
-    /* --- Responsive Table Wrapper --- */
+    /* --- Responsive Table vs. Card Layout --- */
+
+    /* Hide the table on mobile, show cards */
     .table-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        display: none;
+    }
+    .log-cards-container {
+        display: block;
+    }
+
+    /* Card styles */
+    .log-card {
+        background-color: #fff;
         border: 1px solid #dee2e6;
         border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
         box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     }
-
-    .table-wrapper table {
-        margin-top: 0; /* Override default margin */
-        box-shadow: none; /* Shadow is on the wrapper now */
-        border-radius: 0;
-        border: none;
-    }
-
-    td form {
-        min-width: 220px; /* Ensure form in action column doesn't wrap too early */
+    .log-card-row {
         display: flex;
-        gap: 0.5rem;
+        flex-wrap: wrap; /* Allow wrapping for long content */
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f1f1;
+    }
+    .log-card-row:last-child {
+        border-bottom: none;
+    }
+    .log-card-row strong {
+        color: #333;
+        margin-right: 1rem; /* Space between label and value */
+    }
+    .log-card-row span {
+        color: #555;
+        text-align: right;
+    }
+    .log-card-row form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.75rem; /* More space for touch targets */
+        margin-top: 0.5rem;
+    }
+}
+
+/* Hide cards on desktop */
+@media (min-width: 769px) {
+    .log-cards-container {
+        display: none;
     }
 }
