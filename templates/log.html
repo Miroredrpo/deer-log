@@ -230,26 +230,6 @@
             </table>
         </div>
 
-        <div class="log-cards-container">
-            {% for log in logs %}
-            <div class="log-card">
-                <div class="log-card-row"><strong>Timestamp:</strong> <span>{{ log.timestamp.split('+')[0].replace('T', ' ') }}</span></div>
-                <div class="log-card-row"><strong>App Name:</strong> <span>{{ log.app_name }}</span></div>
-                <div class="log-card-row"><strong>Installs:</strong> <span>{{ log.installs }}</span></div>
-                <div class="log-card-row"><strong>Real Installs:</strong> <span>{{ "{:,}".format(log.realInstalls) }}</span></div>
-                <div class="log-card-row"><strong>Score:</strong> <span>{{ "%.2f"|format(log.score|float) }}</span></div>
-                <div class="log-card-row"><strong>Ratings:</strong> <span>{{ "{:,}".format(log.ratings) }}</span></div>
-                <div class="log-card-row">
-                    <strong>Actions:</strong>
-                    <form action="{{ url_for('delete_single_log') }}" method="POST" onsubmit="return confirm('Delete this log entry?');">
-                        <input type="hidden" name="timestamp" value="{{ log.timestamp }}">
-                        <input type="password" name="password" placeholder="Password to delete" required>
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
         {% else %}
             <p class="no-logs">No logs found. Click "Log Now" to create the first entry.</p>
             {% endif %}
@@ -261,6 +241,25 @@
 
     <script>
         let countdownInterval;
+        let pollingInterval;
+
+        // Get the timestamp of the most recent log displayed on the page
+        const latestTimestampOnPage = '{{ logs[0].timestamp if logs else "" }}';
+
+        function pollForNewLogs() {
+            fetch("{{ url_for('latest_log_timestamp') }}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.timestamp && data.timestamp !== latestTimestampOnPage) {
+                        // A new log has appeared, reload the page
+                        if(pollingInterval) clearInterval(pollingInterval);
+                        window.location.reload();
+                    }
+                })
+                .catch(err => {
+                    console.error("Polling error:", err);
+                });
+        }
 
         function updateCountdown() {
             const timerElement = document.getElementById('next-log-timer');
@@ -274,36 +273,25 @@
 
             const nextRunDate = new Date(nextRunTime);
             const now = new Date();
-            const diff = Math.round((nextRunDate - now) / 1000);
+            let diff = Math.round((nextRunDate - now) / 1000);
 
             if (diff <= 0) {
-                timerElement.textContent = 'Logging in background...';
-                if (countdownInterval) clearInterval(countdownInterval);
-
-                // Wait 15 seconds for the job to run and the scheduler to update, then fetch the new time.
-                setTimeout(() => {
-                    fetch("{{ url_for('scheduler_info') }}")
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.next_run_time) {
-                                timerElement.setAttribute('data-next-run', data.next_run_time);
-                                startCountdown(); // Restart the countdown process
-                            } else {
-                                timerElement.textContent = 'Could not get next run time.';
-                            }
-                        })
-                        .catch(() => {
-                            timerElement.textContent = 'Error fetching schedule.';
-                        });
-                }, 15000);
-                return;
+                // Timer has hit zero, start polling if not already
+                if (!pollingInterval) {
+                    // Poll every 3 seconds
+                    pollingInterval = setInterval(pollForNewLogs, 3000);
+                }
             }
+
+            const isPastDue = diff <= 0;
+            if(isPastDue) diff = -diff; // work with positive numbers for calculation
 
             const hours = Math.floor(diff / 3600);
             const minutes = Math.floor((diff % 3600) / 60);
             const seconds = diff % 60;
 
-            timerElement.textContent = `Next log in: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            const timeString = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            timerElement.textContent = isPastDue ? `Logging due: -${timeString}` : `Next log in: ${timeString}`;
         }
 
         function startCountdown() {

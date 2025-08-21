@@ -246,6 +246,24 @@ def reschedule():
         flash("Invalid interval.", "warning")
     return redirect(url_for('log_page'))
 
+@app.route('/log/latest_timestamp')
+def latest_log_timestamp():
+    if not os.path.exists(LOG_FILE):
+        return jsonify(timestamp=None)
+
+    with log_lock:
+        with open(LOG_FILE, 'r') as f:
+            # Read all lines and get the last one
+            lines = f.readlines()
+            if not lines:
+                return jsonify(timestamp=None)
+
+            try:
+                latest_log = json.loads(lines[-1])
+                return jsonify(timestamp=latest_log.get('timestamp'))
+            except (json.JSONDecodeError, IndexError):
+                return jsonify(timestamp=None)
+
 # --- Initial Job Scheduling ---
 # Schedule the first job to run every 1 hour by default
 if not scheduler.get_job('scheduled_log'):
